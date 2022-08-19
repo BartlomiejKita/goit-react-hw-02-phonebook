@@ -1,91 +1,88 @@
 import { Component } from 'react';
 import { nanoid } from 'nanoid';
+import ContactForm from './ContactForm';
+import Filter from './Filter';
+import ContactList from './ContactList';
+import Notification from './Notification';
+import styled from 'styled-components';
+
+const Center = styled.div`
+  position: relative;
+  padding: 50px 50px;
+  background: #fff;
+  border-radius: 10px;
+`;
+
+const MainHeader = styled.h1`
+  font-size: 2em;
+  border-left: 5px solid dodgerblue;
+  padding: 10px;
+  color: #000;
+  letter-spacing: 5px;
+  margin-bottom: 60px;
+  font-weight: bold;
+  padding-left: 10px;
+`;
+
+const SecondHeader = styled.h2`
+  font-size: 1.5em;
+  border-left: 5px solid dodgerblue;
+  padding: 10px;
+  color: #000;
+  letter-spacing: 5px;
+  margin-bottom: 60px;
+  font-weight: bold;
+  padding-left: 10px;
+`;
 
 class App extends Component {
   state = {
-    contacts: [
-      { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
-      { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
-      { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
-      { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
-    ],
-    name: '',
-    number: '',
+    contacts: [],
     filter: '',
   };
 
   getContacts = () => {
     const { contacts, filter } = this.state;
     const normalizedFilter = filter.toLocaleLowerCase();
-    return contacts.filter(contact =>
-      contact.name.toLowerCase().includes(normalizedFilter)
-    );
+    return contacts
+      .filter(contact => contact.name.toLowerCase().includes(normalizedFilter))
+      .sort((a, b) => a.name.localeCompare(b.name));
   };
 
-  handleSubmit = evt => {
-    evt.preventDefault();
-    this.addContact();
-  };
-
-  handleChange = evt => {
-    const { name, value } = evt.target;
-    this.setState({ [name]: value });
-  };
-
-  addContact = () => {
-    let name = this.state.name;
-    let number = this.state.number;
-    const contact = { id: nanoid(), name: name, number: number };
+  addContact = ({ name, number }) => {
+    const contact = { id: nanoid(), name, number };
     this.setState(({ contacts }) => ({ contacts: [contact, ...contacts] }));
+  };
+
+  handleFilter = evt => {
+    const { value } = evt.target;
+    this.setState({ filter: value });
+  };
+
+  deleteContact = id => {
+    this.setState(state => ({
+      contacts: state.contacts.filter(contact => contact.id !== id),
+    }));
   };
 
   render() {
     return (
       <>
-        <form onSubmit={this.handleSubmit}>
-          <label htmlFor="">
-            Name
-            <input
-              type="text"
-              name="name"
-              pattern="^[a-zA-Zа-яА-Я]+(([' -][a-zA-Zа-яА-Я ])?[a-zA-Zа-яА-Я]*)*$"
-              title="Name may contain only letters, apostrophe, dash and spaces. For example Adrian, Jacob Mercer, Charles de Batz de Castelmore d'Artagnan"
-              required
-              onChange={this.handleChange}
-              value={this.state.name}
+        <Center>
+          <MainHeader>Phonebook</MainHeader>
+          <ContactForm addContact={this.addContact} state={this.state} />
+
+          <SecondHeader>Contacts</SecondHeader>
+          <Filter onChange={this.handleFilter} />
+          {Object.keys(this.state.contacts).length === 0 ? (
+            <Notification message="There is no contacts to show" />
+          ) : (
+            <ContactList
+              getContacts={this.getContacts}
+              deleteContact={this.deleteContact}
             />
-          </label>
-          <label htmlFor="">
-            Number
-            <input
-              type="tel"
-              name="number"
-              pattern="\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}"
-              title="Phone number must be digits and can contain spaces, dashes, parentheses and can start with +"
-              required
-              onChange={this.handleChange}
-              value={this.state.number}
-            />
-          </label>
-          <button type="submit">Add contact</button>
-        </form>
-        <h2>Contacts</h2>
-        <label htmlFor="">
-          Find contacts by name
-          <input
-            type="text"
-            name="filter"
-            onChange={this.handleChange}
-            value={this.state.filter}
-          />
-        </label>
-        <ul>
-          {this.getContacts().map(({ id, name, number }) => (
-            <li key={id}>
-              {name}: {number}
-            </li>
-          ))}
-        </ul>
+          )}
+        </Center>
       </>
     );
   }
